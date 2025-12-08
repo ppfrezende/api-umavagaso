@@ -5,3 +5,4 @@ coverage
 docker-compose.yml
 .DS_Store
 README_internal.md
+.vscode
