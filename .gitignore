@@ -6,3 +6,5 @@ docker-compose.yml
 .DS_Store
 README_internal.md
 .vscode
+.postman
+.claude
