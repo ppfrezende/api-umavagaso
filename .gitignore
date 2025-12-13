@@ -7,4 +7,5 @@ docker-compose.yml
 README_internal.md
 .vscode
 .postman
+postman
 .claude
