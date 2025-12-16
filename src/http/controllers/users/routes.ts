@@ -1,14 +1,16 @@
 import { FastifyInstance } from 'fastify';
 import { create } from './create';
-import { profile } from './profile';
-import { clerkWebhook } from './webhook';
-import { requireAuth } from '../../../middlewares';
+import { verify } from './verify';
+import { resendCode } from './resend-code';
+import { authenticate } from './authenticate';
+import { me } from './me';
+import { requireAuth } from '@/middlewares/auth';
 
 export async function usersRoutes(app: FastifyInstance) {
-  // Webhook do Clerk (público, sem autenticação)
-  app.post('/webhooks/clerk', clerkWebhook);
-
+  app.post('/sessions', authenticate);
+  app.post('/users', create);
+  app.post('/users/verify', verify);
+  app.post('/users/resend-code', resendCode);
   // Rotas autenticadas
-  app.post('/users', { preHandler: [requireAuth] }, create);
-  app.get('/users/profile', { preHandler: [requireAuth] }, profile);
+  app.get('/me', { onRequest: [requireAuth] }, me);
 }

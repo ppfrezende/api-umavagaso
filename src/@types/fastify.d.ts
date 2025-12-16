@@ -4,8 +4,17 @@ import { Role, User, Tenant } from '@prisma/client';
 declare module 'fastify' {
   export interface FastifyRequest {
     userId?: string;
-    clerkId?: string;
     userRole?: Role;
-    user?: User & { tenant?: Tenant | null };
+    userData?: User & { tenant?: Tenant | null };
+  }
+}
+
+declare module '@fastify/jwt' {
+  interface FastifyJWT {
+    user: {
+      sub: string;
+      email: string;
+      role?: Role;
+    };
   }
 }

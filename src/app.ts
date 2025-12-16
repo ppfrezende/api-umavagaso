@@ -1,8 +1,9 @@
 import fastify from 'fastify';
 import cors from '@fastify/cors';
+import jwt from '@fastify/jwt';
+import cookie from '@fastify/cookie';
 import { env } from './env';
 import { ZodError } from 'zod';
-import { clerkPlugin } from '@clerk/fastify';
 import { usersRoutes } from './http/controllers/users/routes';
 
 export const app = fastify({ logger: true });
@@ -17,7 +18,13 @@ app.register(
 }*/,
 );
 
-app.register(clerkPlugin);
+// Registrar cookie para gerenciamento de cookies
+app.register(cookie);
+
+// Registrar JWT para autenticação
+app.register(jwt, {
+  secret: env.JWT_SECRET,
+});
 
 // Registrar rotas
 app.register(usersRoutes);
