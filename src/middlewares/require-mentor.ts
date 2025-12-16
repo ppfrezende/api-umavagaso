@@ -1,5 +1,4 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
-import { getAuth } from '@clerk/fastify';
 import { prisma } from '../lib/prisma';
 import { Role } from '@prisma/client';
 
@@ -7,18 +6,22 @@ export async function requireMentor(
   request: FastifyRequest,
   reply: FastifyReply,
 ) {
-  const { userId: clerkId } = getAuth(request);
-
-  if (!clerkId) {
-    return reply.code(401).send({
-      error: 'Unauthorized',
-      message: 'You must be logged in to access this resource',
-    });
-  }
-
   try {
+    // Verifica o token JWT no header Authorization
+    await request.jwtVerify();
+
+    // O userId vem do payload do JWT
+    const { sub: userId } = request.user as { sub: string };
+
+    if (!userId) {
+      return reply.code(401).send({
+        error: 'Unauthorized',
+        message: 'Invalid token payload',
+      });
+    }
+
     const user = await prisma.user.findUnique({
-      where: { clerkId },
+      where: { id: userId },
       include: { tenant: true },
     });
 
@@ -44,10 +47,16 @@ export async function requireMentor(
     }
 
     request.userId = user.id;
-    request.clerkId = clerkId;
     request.userRole = user.role;
-    request.user = user;
-  } catch (_error) {
+    request.userData = user;
+  } catch (error) {
+    if (error instanceof Error && error.name === 'UnauthorizedError') {
+      return reply.code(401).send({
+        error: 'Unauthorized',
+        message: 'You must be logged in to access this resource',
+      });
+    }
+
     return reply.code(500).send({
       error: 'Internal Server Error',
       message: 'Failed to verify user permissions',

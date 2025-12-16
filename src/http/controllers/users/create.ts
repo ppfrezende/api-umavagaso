@@ -1,54 +1,37 @@
+import { UserAlreadyExistsError } from '@/use-cases/_errors/user-already-exists-error';
+import { makeCreateUserUseCase } from '@/use-cases/_factories/user-factories/make-create-user-use-case';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
-import { Role } from '@prisma/client';
-import { makeCreateUserUseCase } from '@/use-cases/_factories/user-factories/make-create-user-use-case';
-import { UserAlreadyExistsError } from '@/use-cases/_errors/user-already-exists-error';
-
-const createUserBodySchema = z.object({
-  clerkId: z.string(),
-  name: z.string(),
-  email: z.string().email(),
-  role: z.nativeEnum(Role).optional(),
-  avatar: z.string().url().optional(),
-  tenantId: z.string().uuid().optional(),
-});
 
 export async function create(request: FastifyRequest, reply: FastifyReply) {
-  try {
-    const { clerkId, name, email, role, avatar, tenantId } =
-      createUserBodySchema.parse(request.body);
+  const bodySchema = z.object({
+    name: z.string(),
+    email: z.string().email(),
+    password: z.string().min(6),
+  });
 
+  const { name, email, password } = bodySchema.parse(request.body);
+
+  try {
     const createUserUseCase = makeCreateUserUseCase();
 
     const { user } = await createUserUseCase.execute({
-      clerkId,
       name,
       email,
-      role,
-      avatar,
-      tenantId,
+      password,
     });
 
     return reply.status(201).send({
       user: {
-        id: user.id,
-        clerkId: user.clerkId,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        avatar: user.avatar,
-        tenantId: user.tenantId,
-        isActive: user.isActive,
-        createdAt: user.createdAt,
+        ...user,
+        password_hash: undefined,
       },
     });
-  } catch (error) {
-    if (error instanceof UserAlreadyExistsError) {
-      return reply.status(409).send({
-        error: error.message,
-      });
+  } catch (err) {
+    if (err instanceof UserAlreadyExistsError) {
+      return reply.status(409).send({ message: err.message });
     }
 
-    throw error;
+    throw err;
   }
 }
