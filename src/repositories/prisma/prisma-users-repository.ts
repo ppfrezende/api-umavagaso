@@ -14,7 +14,13 @@ export class PrismaUsersRepository implements UsersRepository {
   async findById(id: string): Promise<User | null> {
     const user = await prisma.user.findUnique({
       where: { id },
-      include: { tenant: true },
+      include: {
+        userTenants: {
+          include: {
+            tenant: true,
+          },
+        },
+      },
     });
 
     return user;
@@ -24,7 +30,13 @@ export class PrismaUsersRepository implements UsersRepository {
   async findByEmail(email: string): Promise<User | null> {
     const user = await prisma.user.findUnique({
       where: { email },
-      include: { tenant: true },
+      include: {
+        userTenants: {
+          include: {
+            tenant: true,
+          },
+        },
+      },
     });
 
     return user;
@@ -38,7 +50,13 @@ export class PrismaUsersRepository implements UsersRepository {
           gte: new Date(),
         },
       },
-      include: { tenant: true },
+      include: {
+        userTenants: {
+          include: {
+            tenant: true,
+          },
+        },
+      },
     });
 
     return user;

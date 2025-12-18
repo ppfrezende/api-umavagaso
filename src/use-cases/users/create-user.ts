@@ -4,6 +4,7 @@ import { UserAlreadyExistsError } from '../_errors/user-already-exists-error';
 import { hash } from 'bcryptjs';
 import { generateVerificationToken, getVerificationTokenExpiry } from '@/lib/generate-verification-token';
 import { mailService } from '@/lib/mail';
+import { prisma } from '@/lib/prisma';
 
 interface CreateUserUseCaseRequest {
   id?: string;
@@ -46,20 +47,36 @@ export class CreateUserUseCase {
     await mailService.sendVerificationEmail(email, name, verificationToken);
 
     // STEP 2: Se o email foi enviado com sucesso, criar o usuário
-    // Usuário começa inativo até verificar o email
-    const user = await this.usersRepository.create({
-      id,
-      name,
-      email,
-      role,
-      password_hash,
-      avatar,
-      isActive: false, // Usuário inativo até verificar email
-      emailVerificationToken: verificationToken,
-      emailVerificationExpiry: verificationExpiry,
-      tenant: tenantId ? { connect: { id: tenantId } } : undefined,
+    // Se tenantId for fornecido, cria a relação na tabela intermediária
+    const result = await prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          id,
+          name,
+          email,
+          role,
+          password_hash,
+          avatar,
+          isActive: false, // Usuário inativo até verificar email
+          emailVerificationToken: verificationToken,
+          emailVerificationExpiry: verificationExpiry,
+        },
+      });
+
+      // Se tenantId foi fornecido, criar a relação UserTenant
+      if (tenantId) {
+        await tx.userTenant.create({
+          data: {
+            userId: user.id,
+            tenantId,
+            role,
+          },
+        });
+      }
+
+      return user;
     });
 
-    return { user };
+    return { user: result };
   }
 }

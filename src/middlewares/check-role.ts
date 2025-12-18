@@ -20,7 +20,13 @@ export function checkRole(allowedRoles: Role[]) {
 
       const user = await prisma.user.findUnique({
         where: { id: userId },
-        include: { tenant: true },
+        include: {
+          userTenants: {
+            include: {
+              tenant: true,
+            },
+          },
+        },
       });
 
       if (!user) {

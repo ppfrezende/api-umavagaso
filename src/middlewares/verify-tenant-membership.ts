@@ -21,7 +21,13 @@ export async function verifyTenantMembership(
 
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { tenant: true },
+      include: {
+        userTenants: {
+          include: {
+            tenant: true,
+          },
+        },
+      },
     });
 
     if (!user) {
@@ -38,7 +44,7 @@ export async function verifyTenantMembership(
       });
     }
 
-    if (!user.tenantId || !user.tenant) {
+    if (!user.userTenants || user.userTenants.length === 0) {
       return reply.code(403).send({
         error: 'Forbidden',
         message: 'You must be part of a tenant to access this resource',

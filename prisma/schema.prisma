@@ -7,20 +7,26 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  OWNER
+  MENTOR
+  STUDENT
+}
+
 model Tenant {
-  id          String  @id @default(uuid())
+  id          String   @id @default(uuid())
   name        String
   description String?
   logo        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  users User[]
+  owner   User   @relation("TenantOwner", fields: [ownerId], references: [id])
+  ownerId String @unique
+
+  userTenants UserTenant[]
 
   @@map("tenants")
-}
-
-enum Role {
-  MENTOR
-  STUDENT
 }
 
 model User {
@@ -32,13 +38,30 @@ model User {
   emailVerificationExpiry DateTime?
   password_hash           String
   avatar                  String?
-  role                    Role      @default(MENTOR)
+  role                    Role      @default(STUDENT)
   isActive                Boolean   @default(true)
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 
-  tenant   Tenant? @relation(fields: [tenantId], references: [id])
-  tenantId String?
+  ownedTenants Tenant[]     @relation("TenantOwner")
+  userTenants  UserTenant[]
 
   @@map("users")
+}
+
+model UserTenant {
+  id        String   @id @default(uuid())
+  userId    String
+  tenantId  String
+  role      Role
+  joinedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tenantId])
+  @@index([userId])
+  @@index([tenantId])
+  @@map("user_tenants")
 }
