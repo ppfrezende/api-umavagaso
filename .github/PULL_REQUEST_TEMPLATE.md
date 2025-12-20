@@ -2,6 +2,7 @@
 
 Exemplo: [FEATURE] - Implementar autenticação com JWT
 Exemplo: [FIX] - Corrigir validação de email duplicado
+clear
 
 ## Descrição
 
