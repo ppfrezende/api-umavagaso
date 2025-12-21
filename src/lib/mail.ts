@@ -47,7 +47,6 @@ class MailService {
         html,
       });
 
-      console.log('Message sent: %s', info.messageId);
       return info;
     } catch (error) {
       console.error('Error sending email:', error);
@@ -90,8 +89,13 @@ class MailService {
     });
   }
 
-  async sendInvitationEmail(to: string, tenantName: string, inviterName: string, token: string) {
-    const invitationUrl = `${env.APP_URL}/accept-invitation?token=${token}`;
+  async sendInvitationEmail(
+    to: string,
+    tenantName: string,
+    inviterName: string,
+    token: string,
+  ) {
+    const invitationUrl = `${env.FRONTEND_URL}/accept-invitation?token=${token}`;
 
     const html = `
       <!DOCTYPE html>
@@ -131,8 +135,14 @@ class MailService {
     });
   }
 
-  async sendExistingUserInvitationEmail(to: string, userName: string, tenantName: string, inviterName: string, token: string) {
-    const invitationUrl = `${env.APP_URL}/accept-invitation?token=${token}`;
+  async sendExistingUserInvitationEmail(
+    to: string,
+    userName: string,
+    tenantName: string,
+    inviterName: string,
+    token: string,
+  ) {
+    const invitationUrl = `${env.FRONTEND_URL}/accept-invitation?token=${token}`;
 
     const html = `
       <!DOCTYPE html>
