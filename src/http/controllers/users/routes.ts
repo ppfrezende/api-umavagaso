@@ -5,6 +5,7 @@ import { resendCode } from './resend-code';
 import { authenticate } from './authenticate';
 import { me } from './me';
 import { registerWithTenant } from './register-with-tenant';
+import { listStudents } from './list-students';
 import { requireAuth } from '@/middlewares/auth';
 
 export async function usersRoutes(app: FastifyInstance) {
@@ -15,4 +16,5 @@ export async function usersRoutes(app: FastifyInstance) {
   app.post('/users/resend-code', resendCode);
   // Rotas autenticadas
   app.get('/me', { onRequest: [requireAuth] }, me);
+  app.get('/tenants/:tenantId/students', { onRequest: [requireAuth] }, listStudents);
 }
