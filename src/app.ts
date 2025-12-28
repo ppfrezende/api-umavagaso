@@ -6,6 +6,8 @@ import { env } from './env';
 import { ZodError } from 'zod';
 import { usersRoutes } from './http/controllers/users/routes';
 import { invitationsRoutes } from './http/controllers/invitations/routes';
+import { phaseTemplatesRoutes } from './http/controllers/phase-templates/routes';
+import { studentPhasesRoutes } from './http/controllers/student-phases/routes';
 
 export const app = fastify({ logger: true });
 
@@ -30,6 +32,8 @@ app.register(jwt, {
 // Registrar rotas
 app.register(usersRoutes);
 app.register(invitationsRoutes);
+app.register(phaseTemplatesRoutes);
+app.register(studentPhasesRoutes);
 
 app.setErrorHandler((error, _request, reply) => {
   if (error instanceof ZodError) {

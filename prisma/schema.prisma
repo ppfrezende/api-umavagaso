@@ -20,6 +20,13 @@ enum InvitationStatus {
   CANCELLED
 }
 
+enum PhaseStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+}
+
 model Tenant {
   id          String   @id @default(uuid())
   name        String
@@ -31,8 +38,9 @@ model Tenant {
   owner   User   @relation("TenantOwner", fields: [ownerId], references: [id])
   ownerId String @unique
 
-  userTenants UserTenant[]
-  invitations Invitation[]
+  userTenants    UserTenant[]
+  invitations    Invitation[]
+  phaseTemplates PhaseTemplate[]
 
   @@map("tenants")
 }
@@ -51,9 +59,10 @@ model User {
   createdAt               DateTime  @default(now())
   updatedAt               DateTime  @updatedAt
 
-  ownedTenants    Tenant[]     @relation("TenantOwner")
+  ownedTenants    Tenant[]       @relation("TenantOwner")
   userTenants     UserTenant[]
-  invitationsSent Invitation[] @relation("InvitationsSent")
+  invitationsSent Invitation[]   @relation("InvitationsSent")
+  studentPhases   StudentPhase[]
 
   @@map("users")
 }
@@ -96,4 +105,58 @@ model Invitation {
   @@index([token])
   @@index([status])
   @@map("invitations")
+}
+
+model PhaseTemplate {
+  id                        String   @id @default(uuid())
+  tenantId                  String
+  name                      String
+  description               String?
+  purpose                   String
+  defaultOrder              Int
+  isActive                  Boolean  @default(true)
+  suggestedDurationDays     Int?
+  defaultMinAccuracy        Decimal? @db.Decimal(5, 2)
+  defaultMinCompletion      Decimal? @db.Decimal(5, 2)
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  studentPhases StudentPhase[]
+
+  @@unique([tenantId, defaultOrder])
+  @@index([tenantId])
+  @@index([isActive])
+  @@map("phase_templates")
+}
+
+model StudentPhase {
+  id                     String       @id @default(uuid())
+  studentId              String
+  editalId               String?
+  phaseTemplateId        String?
+  name                   String
+  description            String?
+  purpose                String?
+  order                  Int
+  status                 PhaseStatus  @default(NOT_STARTED)
+  startedAt              DateTime?
+  completedAt            DateTime?
+  currentAccuracy        Decimal?     @db.Decimal(5, 2)
+  currentCompletion      Decimal?     @db.Decimal(5, 2)
+  minAccuracyToAdvance   Decimal?     @db.Decimal(5, 2)
+  minCompletionToAdvance Decimal?     @db.Decimal(5, 2)
+  suggestedDurationDays  Int?
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
+
+  student       User           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  phaseTemplate PhaseTemplate? @relation(fields: [phaseTemplateId], references: [id], onDelete: SetNull)
+
+  @@unique([studentId, editalId, order])
+  @@index([studentId])
+  @@index([editalId])
+  @@index([status])
+  @@index([phaseTemplateId])
+  @@map("student_phases")
 }
